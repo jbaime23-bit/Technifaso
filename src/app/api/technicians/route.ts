@@ -7,10 +7,24 @@ const MAX_PHOTO_BYTES = 1_500_000;
 const PHOTO_BUCKET = "technician-photos";
 
 function supabaseConfig() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error("Configuration Supabase manquante.");
+  const url = process.env.SUPABASE_URL?.trim();
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!url || !key) throw new Error("Configuration Supabase manquante : SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY.");
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(url);
+  } catch {
+    throw new Error("SUPABASE_URL n'est pas une URL valide.");
+  }
+  if (parsedUrl.protocol !== "https:" && parsedUrl.hostname !== "localhost") {
+    throw new Error("SUPABASE_URL doit utiliser HTTPS.");
+  }
   return { url: url.replace(/\/$/, ""), key };
+}
+
+function logSupabaseFailure(operation: string, status: number, details: string) {
+  // Ne jamais journaliser l'URL complète ni les clés d'accès.
+  console.error(`[api/technicians] ${operation} échoué (HTTP ${status}): ${details.slice(0, 1200)}`);
 }
 
 async function supabaseFetch(path: string, init?: RequestInit) {
@@ -18,6 +32,7 @@ async function supabaseFetch(path: string, init?: RequestInit) {
   return fetch(`${url}/rest/v1/${path}`, {
     ...init,
     cache: "no-store",
+    signal: AbortSignal.timeout(12_000),
     headers: {
       apikey: key,
       Authorization: `Bearer ${key}`,
@@ -41,21 +56,22 @@ async function uploadProfilePhoto(dataUrl: unknown) {
   const extension = mimeType === "image/jpeg" ? "jpg" : mimeType === "image/png" ? "png" : "webp";
   const objectPath = `${crypto.randomUUID()}.${extension}`;
   const { url, key } = supabaseConfig();
-  const response = await fetch(
-    `${url}/storage/v1/object/${PHOTO_BUCKET}/${objectPath}`,
-    {
-      method: "POST",
-      cache: "no-store",
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-        "Content-Type": mimeType,
-        "x-upsert": "false",
-      },
-      body: bytes,
+  const response = await fetch(`${url}/storage/v1/object/${PHOTO_BUCKET}/${objectPath}`, {
+    method: "POST",
+    cache: "no-store",
+    signal: AbortSignal.timeout(12_000),
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+      "Content-Type": mimeType,
+      "x-upsert": "false",
     },
-  );
-  if (!response.ok) throw new Error("Envoi de la photo impossible. Vérifiez la configuration du stockage Supabase.");
+    body: bytes,
+  });
+  if (!response.ok) {
+    logSupabaseFailure("Upload Storage", response.status, await response.text());
+    throw new Error("Envoi de la photo impossible. Vérifiez le bucket technician-photos dans Supabase.");
+  }
   return `${url}/storage/v1/object/public/${PHOTO_BUCKET}/${objectPath}`;
 }
 
@@ -64,12 +80,22 @@ export async function GET() {
     const response = await supabaseFetch(
       "technicians?select=id,name,trade,city,neighborhood,phone,experience,emergency,description,profile_photo,verified,recommended,status,created_at&status=eq.published&order=recommended.desc,verified.desc,created_at.desc",
     );
-    if (!response.ok) throw new Error("Erreur de lecture Supabase.");
+    if (!response.ok) {
+      logSupabaseFailure("Lecture des techniciens", response.status, await response.text());
+      return NextResponse.json(
+        { error: "Impossible de lire les profils. Vérifiez la table technicians et les colonnes city/profile_photo dans le projet Supabase configuré sur Vercel.", code: "TECHNICIANS_READ_FAILED" },
+        { status: 503, headers: { "Cache-Control": "no-store" } },
+      );
+    }
     return NextResponse.json(await response.json(), {
       headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" },
     });
-  } catch {
-    return NextResponse.json({ error: "Service temporairement indisponible." }, { status: 503 });
+  } catch (error) {
+    console.error("[api/technicians] GET impossible:", error);
+    return NextResponse.json(
+      { error: "Service Supabase temporairement indisponible. Consultez les journaux Vercel pour le détail.", code: "TECHNICIANS_SERVICE_UNAVAILABLE" },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
   }
 }
 
@@ -116,12 +142,16 @@ export async function POST(request: Request) {
       }),
     });
 
-    if (!response.ok) throw new Error("Insertion impossible.");
+    if (!response.ok) {
+      logSupabaseFailure("Création du profil", response.status, await response.text());
+      return NextResponse.json({ error: "Enregistrement impossible. Vérifiez le schéma technicians et les journaux Vercel.", code: "TECHNICIAN_CREATE_FAILED" }, { status: 503 });
+    }
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {
+    console.error("[api/technicians] POST impossible:", error);
     if (error instanceof Error && (error.message.startsWith("Format de photo") || error.message.startsWith("La photo") || error.message.startsWith("Envoi de la photo"))) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
-    return NextResponse.json({ error: "Envoi impossible pour le moment. Vérifiez également que la mise à jour Supabase a été appliquée." }, { status: 503 });
+    return NextResponse.json({ error: "Envoi impossible pour le moment. Consultez les journaux Vercel.", code: "TECHNICIAN_SUBMISSION_UNAVAILABLE" }, { status: 503 });
   }
 }
