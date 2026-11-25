@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   BOBO_DIOULASSO_NEIGHBORHOODS,
   CITIES,
-  OTHER_CITIES,
   OTHER_LOCALITY,
   OUAGADOUGOU_NEIGHBORHOODS,
   TRADE_CATEGORIES,
@@ -32,10 +31,12 @@ function compressPhoto(file: File): Promise<string> {
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
       resolve(canvas.toDataURL("image/jpeg", 0.72));
     };
+
     image.onerror = () => {
       URL.revokeObjectURL(objectUrl);
       reject(new Error("Cette photo ne peut pas être ouverte."));
     };
+
     image.src = objectUrl;
   });
 }
