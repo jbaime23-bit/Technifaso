@@ -3,7 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AdBanner from "@/components/AdBanner";
-import { NEIGHBORHOODS, TRADES, type Technician } from "@/lib/types";
+import {
+  BOBO_DIOULASSO_NEIGHBORHOODS,
+  NEIGHBORHOODS,
+  OTHER_CITIES,
+  OUAGADOUGOU_NEIGHBORHOODS,
+  TRADE_CATEGORIES,
+  type Technician,
+} from "@/lib/types";
 
 function burkinaPhone(phone: string) {
   const digits = phone.replace(/\D/g, "");
@@ -12,7 +19,21 @@ function burkinaPhone(phone: string) {
 }
 
 function initials(name: string) {
-  return name.trim().slice(0, 1).toUpperCase() || "?";
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.slice(0, 1).toUpperCase())
+    .join("") || "?";
+}
+
+function matchesLocation(person: Technician, location: string) {
+  if (!location) return true;
+  return (
+    person.neighborhood === location ||
+    person.city === location ||
+    `${person.city ?? ""} · ${person.neighborhood}` === location
+  );
 }
 
 export default function HomePage() {
@@ -42,14 +63,14 @@ export default function HomePage() {
     return technicians
       .filter((person) => {
         const haystack =
-          `${person.name} ${person.trade} ${person.neighborhood} ${person.description}`.toLocaleLowerCase(
+          `${person.name} ${person.trade} ${person.city ?? ""} ${person.neighborhood} ${person.description}`.toLocaleLowerCase(
             "fr",
           );
 
         return (
           (!term || haystack.includes(term)) &&
           (!trade || person.trade === trade) &&
-          (!neighborhood || person.neighborhood === neighborhood) &&
+          matchesLocation(person, neighborhood) &&
           (!urgentOnly || person.emergency)
         );
       })
@@ -96,7 +117,7 @@ export default function HomePage() {
               Trouvez le bon professionnel.
             </h1>
             <p className="mt-2 max-w-2xl text-slate-600">
-              Des artisans et techniciens à Ouagadougou et dans les villes environnantes.
+              Des artisans et techniciens partout au Burkina Faso (Ouagadougou, Bobo-Dioulasso, Koudougou, Kaya, Ouahigouya, Banfora, Fada N'Gourma...).
             </p>
           </div>
 
@@ -117,7 +138,11 @@ export default function HomePage() {
               className="rounded-xl border border-slate-200 bg-white px-3 py-3"
             >
               <option value="">Tous les métiers</option>
-              {TRADES.map((item) => <option key={item}>{item}</option>)}
+              {TRADE_CATEGORIES.map((group) => (
+                <optgroup key={group.category} label={group.category}>
+                  {group.trades.map((item) => <option key={item} value={item}>{item}</option>)}
+                </optgroup>
+              ))}
             </select>
             <select
               aria-label="Filtrer par quartier ou ville"
@@ -126,7 +151,17 @@ export default function HomePage() {
               className="rounded-xl border border-slate-200 bg-white px-3 py-3"
             >
               <option value="">Tous les quartiers / villes</option>
-              {NEIGHBORHOODS.map((item) => <option key={item}>{item}</option>)}
+              <optgroup label="Ouagadougou">
+                {OUAGADOUGOU_NEIGHBORHOODS.map((item) => <option key={item} value={item}>{item}</option>)}
+              </optgroup>
+              <optgroup label="Bobo-Dioulasso">
+                <option value="Bobo-Dioulasso">Toute la ville de Bobo-Dioulasso</option>
+                {BOBO_DIOULASSO_NEIGHBORHOODS.map((item) => <option key={item} value={item}>{item}</option>)}
+              </optgroup>
+              <optgroup label="Autres villes (A–Z)">
+                {OTHER_CITIES.map((item) => <option key={item} value={item}>{item}</option>)}
+              </optgroup>
+              <option value="Autre localité">Autre localité</option>
             </select>
             <button
               type="button"
@@ -156,7 +191,9 @@ export default function HomePage() {
 
           {!loading && !error && filtered.length === 0 && (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
-              <p className="font-bold text-slate-800">Aucun professionnel ne correspond.</p>
+              <p className="font-bold text-slate-800">
+                {urgentOnly ? "Aucun professionnel disponible 24h/24 ne correspond à ces critères." : "Aucun professionnel ne correspond."}
+              </p>
               <p className="mt-2 text-sm text-slate-600">
                 Essayez un autre filtre ou revenez plus tard : les nouveaux profils sont validés avant publication.
               </p>
@@ -168,9 +205,18 @@ export default function HomePage() {
               <div key={person.id}>
                 <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="flex gap-3">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-lg font-black text-amber-400">
-                      {initials(person.name)}
-                    </div>
+                    {person.profile_photo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={person.profile_photo}
+                        alt={`Photo de ${person.name}`}
+                        className="h-12 w-12 shrink-0 rounded-2xl object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-lg font-black text-amber-400">
+                        {initials(person.name)}
+                      </div>
+                    )}
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="font-black text-slate-900">{person.name}</h3>
@@ -180,7 +226,7 @@ export default function HomePage() {
                       </div>
                       <p className="mt-1 text-sm font-semibold text-slate-700">{person.trade}</p>
                       <p className="mt-1 text-xs text-slate-500">
-                        {person.neighborhood} · {person.experience} an(s) d’expérience
+                        {person.city ? `${person.city} · ` : ""}{person.neighborhood} · {person.experience} an(s) d’expérience
                       </p>
                     </div>
                   </div>
@@ -188,6 +234,12 @@ export default function HomePage() {
                   <p className="mt-4 text-sm leading-6 text-slate-600">{person.description}</p>
 
                   <div className="mt-4 flex flex-wrap gap-2">
+                    <a
+                      href={`tel:${person.phone.replace(/[^\d+]/g, "")}`}
+                      className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white"
+                    >
+                      📞 Appeler
+                    </a>
                     {revealed.includes(person.id) ? (
                       <div className="flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 font-bold text-slate-900">
                         <span>{person.phone}</span>
@@ -203,9 +255,9 @@ export default function HomePage() {
                       <button
                         type="button"
                         onClick={() => revealNumber(person.id)}
-                        className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white"
+                        className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700"
                       >
-                        📞 Numéro
+                        📱 Numéro
                       </button>
                     )}
                     <a
@@ -278,4 +330,4 @@ export default function HomePage() {
       </footer>
     </main>
   );
-           }
+}
