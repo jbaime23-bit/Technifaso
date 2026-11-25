@@ -4,29 +4,46 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import type { Technician } from "@/lib/types";
 
+async function readJson(response: Response) {
+  return response.json().catch(() => ({} as Record<string, unknown>)) as Promise<Record<string, any>>;
+}
+
 export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loginSubmitting, setLoginSubmitting] = useState(false);
 
   const loadTechnicians = useCallback(async () => {
     setLoading(true);
-    const response = await fetch("/api/admin/technicians", { cache: "no-store" });
-    if (response.status === 401) {
-      setAuthenticated(false);
-      setLoading(false);
-      return;
-    }
-    const data = await response.json();
-    if (response.ok) {
-      setTechnicians(data);
+    try {
+      const response = await fetch("/api/admin/technicians", { cache: "no-store" });
+      const data = await readJson(response);
+      if (response.status === 401) {
+        setAuthenticated(false);
+        setTechnicians([]);
+        setMessage("");
+        return false;
+      }
+      if (!response.ok) {
+        setAuthenticated(false);
+        setMessage(data.error || `Chargement impossible (HTTP ${response.status}).`);
+        return false;
+      }
+      setTechnicians(Array.isArray(data) ? data : []);
       setAuthenticated(true);
-    } else {
-      setMessage(data.error || "Chargement impossible.");
+      setMessage("");
+      return true;
+    } catch (error) {
+      console.error("[admin] Échec du chargement des profils", error);
+      setAuthenticated(false);
+      setMessage("Le serveur ne répond pas. Vérifiez le déploiement Vercel et les journaux des fonctions.");
+      return false;
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -36,49 +53,76 @@ export default function AdminPage() {
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
-    const response = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      setMessage(data.error || "Connexion refusée.");
-      return;
+    setLoginSubmitting(true);
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      const data = await readJson(response);
+      if (!response.ok) {
+        setMessage(data.error || `Connexion refusée (HTTP ${response.status}).`);
+        return;
+      }
+      setPassword("");
+      await loadTechnicians();
+    } catch (error) {
+      console.error("[admin] Échec de la connexion", error);
+      setMessage("La connexion au serveur a échoué. Vérifiez les journaux Vercel et réessayez.");
+    } finally {
+      setLoginSubmitting(false);
     }
-    setPassword("");
-    await loadTechnicians();
   }
 
   async function logout() {
-    await fetch("/api/admin/logout", { method: "POST" });
-    setAuthenticated(false);
-    setTechnicians([]);
+    try {
+      const response = await fetch("/api/admin/logout", { method: "POST" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      setAuthenticated(false);
+      setTechnicians([]);
+      setMessage("Vous êtes déconnecté.");
+    } catch (error) {
+      console.error("[admin] Échec de la déconnexion", error);
+      setMessage("La déconnexion a échoué. Rechargez la page et réessayez.");
+    }
   }
 
   async function update(id: string, patch: Partial<Technician>) {
-    const response = await fetch(`/api/admin/technicians/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      setMessage(data.error || "Modification impossible.");
-      return;
+    try {
+      const response = await fetch(`/api/admin/technicians/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      const data = await readJson(response);
+      if (!response.ok) {
+        setMessage(data.error || `Modification impossible (HTTP ${response.status}).`);
+        return;
+      }
+      setMessage("Profil mis à jour.");
+      await loadTechnicians();
+    } catch (error) {
+      console.error("[admin] Échec de la modification du profil", error);
+      setMessage("Le serveur ne répond pas. Vérifiez les journaux Vercel.");
     }
-    setMessage("Profil mis à jour.");
-    await loadTechnicians();
   }
 
   async function remove(id: string) {
     if (!window.confirm("Supprimer définitivement ce profil ?")) return;
-    const response = await fetch(`/api/admin/technicians/${id}`, { method: "DELETE" });
-    if (!response.ok) {
-      setMessage("Suppression impossible.");
-      return;
+    try {
+      const response = await fetch(`/api/admin/technicians/${id}`, { method: "DELETE" });
+      const data = await readJson(response);
+      if (!response.ok) {
+        setMessage(data.error || `Suppression impossible (HTTP ${response.status}).`);
+        return;
+      }
+      setMessage("Profil supprimé.");
+      await loadTechnicians();
+    } catch (error) {
+      console.error("[admin] Échec de la suppression du profil", error);
+      setMessage("Le serveur ne répond pas. Vérifiez les journaux Vercel.");
     }
-    await loadTechnicians();
   }
 
   async function edit(person: Technician) {
@@ -88,7 +132,6 @@ export default function AdminPage() {
     if (phone === null) return;
     const description = window.prompt("Description", person.description);
     if (description === null) return;
-
     await update(person.id, { name, phone, description });
   }
 
@@ -120,7 +163,9 @@ export default function AdminPage() {
                 placeholder="Mot de passe administrateur"
                 className="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-3"
               />
-              <button className="rounded-xl bg-slate-900 px-5 py-3 font-bold text-white">Se connecter</button>
+              <button disabled={loginSubmitting} className="rounded-xl bg-slate-900 px-5 py-3 font-bold text-white disabled:opacity-60">
+                {loginSubmitting ? "Connexion…" : "Se connecter"}
+              </button>
             </form>
           ) : (
             <div className="mt-6 space-y-4">
@@ -132,13 +177,12 @@ export default function AdminPage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h2 className="font-black">{person.name}</h2>
-                      <p className="text-sm text-slate-600">{person.trade} · {person.neighborhood} · {person.phone}</p>
+                      <p className="text-sm text-slate-600">{person.trade} · {person.city ? `${person.city} · ` : ""}{person.neighborhood} · {person.phone}</p>
                       <p className="mt-1 text-xs font-bold">
                         Statut : {person.status === "pending" ? "En attente" : person.status === "published" ? "Publié" : "Masqué"}
-                        {" · "}
-                        {person.verified ? "✓ Vérifié" : "Non vérifié"}
-                        {" · "}
-                        {person.recommended ? "★ Vedette" : "Standard"}
+                        {" · "}{person.verified ? "✓ Vérifié" : "Non vérifié"}
+                        {" · "}{person.recommended ? "★ Vedette" : "Standard"}
+                        {person.emergency ? " · ⚡ Disponible 24h/24" : ""}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -168,4 +212,4 @@ export default function AdminPage() {
       </div>
     </main>
   );
-                      }
+}
