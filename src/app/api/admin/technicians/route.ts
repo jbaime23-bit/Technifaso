@@ -23,7 +23,11 @@ export async function GET() {
   );
 
   if (!response.ok) {
-    return NextResponse.json({ error: "Lecture des profils impossible." }, { status: 503 });
+    const details = await response.text();
+    return NextResponse.json(
+      { error: `Erreur Supabase (${response.status}) : ${details}` },
+      { status: 503 },
+    );
   }
 
   return NextResponse.json(await response.json(), {
