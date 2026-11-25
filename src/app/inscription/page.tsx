@@ -32,7 +32,7 @@ function compressPhoto(file: File): Promise<string> {
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
       resolve(canvas.toDataURL("image/jpeg", 0.72));
     };
-n    image.onerror = () => {
+    image.onerror = () => {
       URL.revokeObjectURL(objectUrl);
       reject(new Error("Cette photo ne peut pas être ouverte."));
     };
