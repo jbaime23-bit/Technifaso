@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 interface AdBannerProps {
   placement?: string;
@@ -12,35 +12,56 @@ interface AdBannerProps {
 
 export default function AdBanner({
   placement = "default",
-  format = "horizontal",
-  slotId = "default",
+  format = "auto",
+  slotId,
   className = "",
   compact = false,
 }: AdBannerProps) {
-  const [active, setActive] = useState(false);
+  const clientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
+  const configuredSlot = slotId ?? process.env.NEXT_PUBLIC_ADSENSE_SLOT_ID;
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => setActive(true), 300);
-    return () => clearTimeout(timeoutId);
-  }, []);
+    if (!clientId || !configuredSlot) return;
+
+    try {
+      const adsWindow = window as Window & {
+        adsbygoogle?: unknown[];
+      };
+      adsWindow.adsbygoogle = adsWindow.adsbygoogle || [];
+      adsWindow.adsbygoogle.push({});
+    } catch (error) {
+      // An ad blocker or a delayed Google script should not affect the application.
+      console.warn("Google AdSense n’a pas pu initialiser cet emplacement.", error);
+    }
+  }, [clientId, configuredSlot]);
+
+  const containerClass = `w-full overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 shadow-sm ${compact ? "min-h-[52px] py-2" : "min-h-[68px] py-2.5"} ${className}`;
 
   return (
     <div
       data-ad-placement={placement}
-      data-ad-slot={slotId}
+      data-ad-slot={configuredSlot ?? ""}
       data-ad-format={format}
-      className={`w-full rounded-2xl border border-slate-200 bg-white px-4 flex items-center justify-between gap-3 shadow-sm ${compact ? "min-h-[52px] py-2" : "min-h-[68px] py-2.5"} ${className}`}
+      className={containerClass}
+      aria-label="Espace publicitaire"
     >
-      <div className="flex items-center gap-3">
-        <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-          Pub
-        </span>
-        <p className="text-xs text-slate-600">
-          {active
-            ? "Espace publicitaire TechniFaso (AdSense / Adsterra / Partenaires)"
-            : "Chargement de l'annonce..."}
-        </p>
-      </div>
+      {clientId && configuredSlot ? (
+        <ins
+          className="adsbygoogle block min-h-[36px] w-full"
+          style={{ display: "block" }}
+          data-ad-client={clientId}
+          data-ad-slot={configuredSlot}
+          data-ad-format={format}
+          data-full-width-responsive="true"
+        />
+      ) : (
+        <div className="flex min-h-[36px] items-center justify-center gap-2 text-center">
+          <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            Publicité
+          </span>
+          <p className="text-xs text-slate-600">Espace partenaire</p>
+        </div>
+      )}
     </div>
   );
 }

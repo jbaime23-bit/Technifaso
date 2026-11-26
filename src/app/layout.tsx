@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import Footer from "@/components/Footer";
+
+const adsenseClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
 
 export const metadata: Metadata = {
   title: "TechniFaso — Trouvez un artisan près de chez vous",
@@ -29,8 +33,17 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body>
+        {adsenseClientId ? (
+          <Script
+            async
+            strategy="afterInteractive"
+            crossOrigin="anonymous"
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`}
+          />
+        ) : null}
         <ServiceWorkerRegister />
         {children}
+        <Footer />
       </body>
     </html>
   );
