@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AdBanner from "@/components/AdBanner";
+import { normalizeBurkinaPhone } from "@/lib/phone";
 import {
   BOBO_DIOULASSO_NEIGHBORHOODS,
   NEIGHBORHOODS,
@@ -11,12 +12,6 @@ import {
   TRADE_CATEGORIES,
   type Technician,
 } from "@/lib/types";
-
-function burkinaPhone(phone: string) {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("226")) return digits;
-  return `226${digits.replace(/^0/, "")}`;
-}
 
 function initials(name: string) {
   return name
@@ -43,6 +38,7 @@ export default function HomePage() {
   const [neighborhood, setNeighborhood] = useState("");
   const [urgentOnly, setUrgentOnly] = useState(false);
   const [revealed, setRevealed] = useState<string[]>([]);
+  const [copiedPhoneId, setCopiedPhoneId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -86,6 +82,16 @@ export default function HomePage() {
     setRevealed((previous) => (previous.includes(id) ? previous : [...previous, id]));
   }
 
+  async function copyNumber(id: string, phone: string) {
+    try {
+      await navigator.clipboard.writeText(`+${normalizeBurkinaPhone(phone)}`);
+      setCopiedPhoneId(id);
+      window.setTimeout(() => setCopiedPhoneId((current) => current === id ? null : current), 2000);
+    } catch {
+      setCopiedPhoneId(null);
+    }
+  }
+
   return (
     <main className="min-h-screen pb-24">
       <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
@@ -117,7 +123,7 @@ export default function HomePage() {
               Trouvez le bon professionnel.
             </h1>
             <p className="mt-2 max-w-2xl text-slate-600">
-              Des artisans et techniciens partout au Burkina Faso (Ouagadougou, Bobo-Dioulasso, Koudougou, Kaya, Ouahigouya, Banfora, Fada N'Gourma...).
+              Des artisans et techniciens partout au Burkina Faso (Ouagadougou, Bobo-Dioulasso, Koudougou, Kaya, Ouahigouya, Banfora, Fada N&apos;Gourma...).
             </p>
           </div>
 
@@ -201,95 +207,98 @@ export default function HomePage() {
           )}
 
           <div className="space-y-4">
-            {filtered.map((person, index) => (
-              <div key={person.id}>
-                <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <div className="flex gap-3">
-                    {person.profile_photo ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={person.profile_photo}
-                        alt={`Photo de ${person.name}`}
-                        className="h-12 w-12 shrink-0 rounded-2xl object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-lg font-black text-amber-400">
-                        {initials(person.name)}
+            {filtered.map((person, index) => {
+              const normalizedPhone = normalizeBurkinaPhone(person.phone);
+              return (
+                <div key={person.id}>
+                  <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex gap-3">
+                      {person.profile_photo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={person.profile_photo}
+                          alt={`Photo de ${person.name}`}
+                          className="h-12 w-12 shrink-0 rounded-2xl object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-lg font-black text-amber-400">
+                          {initials(person.name)}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-black text-slate-900">{person.name}</h3>
+                          {person.verified && <span className="text-xs font-bold text-emerald-700">✓ Vérifié</span>}
+                          {person.recommended && <span className="text-xs font-bold text-amber-700">★ Recommandé</span>}
+                          {person.emergency && <span className="text-xs font-bold text-red-700">⚡ 24/7</span>}
+                        </div>
+                        <p className="mt-1 text-sm font-semibold text-slate-700">{person.trade}</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {person.city ? `${person.city} · ` : ""}{person.neighborhood} · {person.experience} an(s) d’expérience
+                        </p>
                       </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-black text-slate-900">{person.name}</h3>
-                        {person.verified && <span className="text-xs font-bold text-emerald-700">✓ Vérifié</span>}
-                        {person.recommended && <span className="text-xs font-bold text-amber-700">★ Recommandé</span>}
-                        {person.emergency && <span className="text-xs font-bold text-red-700">⚡ 24/7</span>}
-                      </div>
-                      <p className="mt-1 text-sm font-semibold text-slate-700">{person.trade}</p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {person.city ? `${person.city} · ` : ""}{person.neighborhood} · {person.experience} an(s) d’expérience
-                      </p>
                     </div>
-                  </div>
 
-                  <p className="mt-4 text-sm leading-6 text-slate-600">{person.description}</p>
+                    <p className="mt-4 text-sm leading-6 text-slate-600">{person.description}</p>
 
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <a
-                      href={`tel:${person.phone.replace(/[^\d+]/g, "")}`}
-                      className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white"
-                    >
-                      📞 Appeler
-                    </a>
-                    {revealed.includes(person.id) ? (
-                      <div className="flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 font-bold text-slate-900">
-                        <span>{person.phone}</span>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <a
+                        href={`tel:+${normalizedPhone}`}
+                        className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white"
+                      >
+                        📞 Appeler
+                      </a>
+                      {revealed.includes(person.id) ? (
+                        <div className="flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 font-bold text-slate-900">
+                          <span>+{normalizedPhone}</span>
+                          <button
+                            type="button"
+                            className="text-xs text-amber-800 underline"
+                            onClick={() => void copyNumber(person.id, person.phone)}
+                          >
+                            {copiedPhoneId === person.id ? "Numéro copié !" : "Copier"}
+                          </button>
+                        </div>
+                      ) : (
                         <button
                           type="button"
-                          className="text-xs text-amber-800 underline"
-                          onClick={() => navigator.clipboard?.writeText(person.phone)}
+                          onClick={() => revealNumber(person.id)}
+                          className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700"
                         >
-                          Copier
+                          📱 Numéro
                         </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => revealNumber(person.id)}
-                        className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700"
+                      )}
+                      <a
+                        className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white"
+                        href={`https://wa.me/${normalizedPhone}?text=${encodeURIComponent(
+                          `Bonjour, je vous contacte via TechniFaso pour votre service ${person.trade}.`,
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
                       >
-                        📱 Numéro
-                      </button>
-                    )}
-                    <a
-                      className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white"
-                      href={`https://wa.me/${burkinaPhone(person.phone)}?text=${encodeURIComponent(
-                        `Bonjour, je vous contacte via TechniFaso pour votre service ${person.trade}.`,
-                      )}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      💬 WhatsApp
-                    </a>
-                    <a
-                      className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700"
-                      href={`https://wa.me/?text=${encodeURIComponent(
-                        `Découvrez ${person.name}, ${person.trade} sur TechniFaso : ${typeof window !== "undefined" ? window.location.href : "https://technifaso.com"}`,
-                      )}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={`Partager le profil de ${person.name} sur WhatsApp`}
-                    >
-                      🔗
-                    </a>
-                  </div>
-                </article>
-                {(index + 1) % 3 === 0 && (
-                  <div className="mt-4">
-                    <AdBanner placement={`inline-${index + 1}`} compact />
-                  </div>
-                )}
-              </div>
-            ))}
+                        💬 WhatsApp
+                      </a>
+                      <a
+                        className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700"
+                        href={`https://wa.me/?text=${encodeURIComponent(
+                          `Découvrez ${person.name}, ${person.trade} sur TechniFaso : ${typeof window !== "undefined" ? window.location.href : "https://technifaso.com"}`,
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`Partager le profil de ${person.name} sur WhatsApp`}
+                      >
+                        🔗
+                      </a>
+                    </div>
+                  </article>
+                  {(index + 1) % 3 === 0 && (
+                    <div className="mt-4">
+                      <AdBanner placement={`inline-${index + 1}`} compact />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <section id="tarifs" className="mt-8 rounded-2xl bg-slate-900 p-5 text-white">
