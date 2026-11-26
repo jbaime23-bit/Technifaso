@@ -1,2 +1,1 @@
-# Remplacer les zéros ci-dessous par l’identifiant éditeur fourni par Google AdSense (sans le préfixe « ca- »).
-google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0
+google.com, pub-3883537883013867, DIRECT, f08c47fec0942fa0
