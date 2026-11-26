@@ -4,7 +4,7 @@ import "./globals.css";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import Footer from "@/components/Footer";
 
-const adsenseClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
+const adsenseClientId = "ca-pub-3883537883013867";
 
 export const metadata: Metadata = {
   title: "TechniFaso — Trouvez un artisan près de chez vous",
