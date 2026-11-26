@@ -177,7 +177,7 @@ export default function HomePage() {
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 class="font-black text-slate-900">{person.name}</h3>
+                          <h3 className="font-black text-slate-900">{person.name}</h3>
                           {person.verified && <span className="text-xs font-bold text-emerald-700">✓ Vérifié</span>}
                           {person.recommended && <span className="text-xs font-bold text-amber-700">★ Recommandé</span>}
                           {person.emergency && <span className="text-xs font-bold text-red-700">⚡ 24/7</span>}
