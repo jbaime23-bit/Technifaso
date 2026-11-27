@@ -67,11 +67,6 @@ const trades = [
   },
 ] as const;
 
-export const metadata = {
-  title: "Conseils par métier | TechniFaso",
-  description: "Conseils pratiques pour l’entretien et les travaux au Burkina Faso, par métier.",
-};
-
 export default function ConseilsPage() {
   const [selectedTrade, setSelectedTrade] = useState<(typeof trades)[number]>(trades[0]);
 
