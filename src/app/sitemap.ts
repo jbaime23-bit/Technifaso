@@ -11,9 +11,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/inscription",
     "/mentions-legales",
     "/politique-de-confidentialite",
-    "/conseils",
-    "/espace-pros",
-    "/edition",
   ].map((path) => ({
     url: `${siteUrl}${path}`,
     lastModified,

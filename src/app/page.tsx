@@ -96,15 +96,12 @@ export default function HomePage() {
     <main className="min-h-screen pb-24">
       <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
-          <Link href="/" className="shrink-0 text-lg font-black tracking-tight text-slate-900">
+          <Link href="/" className="text-lg font-black tracking-tight text-slate-900">
             Techni<span className="text-amber-600">Faso</span>
           </Link>
-          <nav aria-label="Navigation principale" className="flex min-w-0 max-w-[72vw] items-center gap-1 overflow-x-auto text-xs font-bold sm:max-w-none sm:gap-2 sm:text-sm">
-            <a href="#tarifs" className="hidden whitespace-nowrap rounded-xl px-3 py-2 text-slate-700 sm:block">Tarifs</a>
-            <Link href="/conseils" className="whitespace-nowrap rounded-xl px-2 py-2 text-slate-700 hover:bg-slate-100 sm:px-3">Conseils</Link>
-            <Link href="/espace-pros" className="whitespace-nowrap rounded-xl px-2 py-2 text-slate-700 hover:bg-slate-100 sm:px-3">Espace Pros</Link>
-            <Link href="/edition" className="whitespace-nowrap rounded-xl px-2 py-2 text-slate-700 hover:bg-slate-100 sm:px-3">Édition</Link>
-            <Link href="/inscription" className="whitespace-nowrap rounded-xl bg-amber-500 px-3 py-2 text-slate-950 hover:bg-amber-400">+ Pro</Link>
+          <nav className="flex items-center gap-2 text-sm font-bold">
+            <a href="#tarifs" className="hidden rounded-xl px-3 py-2 text-slate-700 sm:block">Tarifs</a>
+            <Link href="/inscription" className="rounded-xl bg-amber-500 px-3 py-2 text-slate-950 hover:bg-amber-400">+ Pro</Link>
           </nav>
         </div>
       </header>
