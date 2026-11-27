@@ -105,7 +105,6 @@ export default function HomePage() {
             <a href="#tarifs" className="whitespace-nowrap rounded-xl px-3 py-2 text-slate-700">Tarifs</a>
             <Link href="/conseils" className="whitespace-nowrap rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Conseils</Link>
             <Link href="/espace-pros" className="whitespace-nowrap rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Espace Pros</Link>
-            <Link href="/edition" className="whitespace-nowrap rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Édition</Link>
             <Link href="/inscription" className="whitespace-nowrap rounded-xl bg-amber-500 px-3 py-2 text-slate-950 hover:bg-amber-400">+ Pro</Link>
           </nav>
 
@@ -128,7 +127,6 @@ export default function HomePage() {
             <a href="#tarifs" onClick={() => setMobileMenuOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Tarifs</a>
             <Link href="/conseils" onClick={() => setMobileMenuOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Conseils</Link>
             <Link href="/espace-pros" onClick={() => setMobileMenuOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Espace Pros</Link>
-            <Link href="/edition" onClick={() => setMobileMenuOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Édition</Link>
           </nav>
         )}
       </header>
