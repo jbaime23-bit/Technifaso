@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl = "https://technifaso.vercel.app";
+const siteUrl = "https://technifaso.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
