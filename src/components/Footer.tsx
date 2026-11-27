@@ -30,6 +30,9 @@ export default function Footer() {
         </section>
 
         <nav aria-label="Liens du pied de page" className="flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold text-slate-600">
+          <Link className="hover:text-amber-700" href="/conseils">Conseils par métier</Link>
+          <Link className="hover:text-amber-700" href="/espace-pros">Espace Pros &amp; Chantiers</Link>
+          <Link className="hover:text-amber-700" href="/edition">Techlibrairie Edition</Link>
           <Link className="hover:text-amber-700" href="/politique-de-confidentialite">Politique de confidentialité</Link>
           <Link className="hover:text-amber-700" href="/mentions-legales">Mentions légales</Link>
           <Link className="hover:text-amber-700" href="/contact">Contact</Link>
