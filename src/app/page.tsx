@@ -41,6 +41,7 @@ export default function HomePage() {
   const [copiedPhoneId, setCopiedPhoneId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/technicians")
@@ -94,19 +95,42 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen pb-24">
-      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
+      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2 sm:py-3">
           <Link href="/" className="shrink-0 text-lg font-black tracking-tight text-slate-900">
             Techni<span className="text-amber-600">Faso</span>
           </Link>
-          <nav aria-label="Navigation principale" className="flex min-w-0 max-w-[72vw] items-center gap-1 overflow-x-auto text-xs font-bold sm:max-w-none sm:gap-2 sm:text-sm">
-            <a href="#tarifs" className="hidden whitespace-nowrap rounded-xl px-3 py-2 text-slate-700 sm:block">Tarifs</a>
-            <Link href="/conseils" className="whitespace-nowrap rounded-xl px-2 py-2 text-slate-700 hover:bg-slate-100 sm:px-3">Conseils</Link>
-            <Link href="/espace-pros" className="whitespace-nowrap rounded-xl px-2 py-2 text-slate-700 hover:bg-slate-100 sm:px-3">Espace Pros</Link>
-            <Link href="/edition" className="whitespace-nowrap rounded-xl px-2 py-2 text-slate-700 hover:bg-slate-100 sm:px-3">Édition</Link>
+
+          <nav aria-label="Navigation principale" className="hidden items-center gap-1 text-sm font-bold md:flex">
+            <a href="#tarifs" className="whitespace-nowrap rounded-xl px-3 py-2 text-slate-700">Tarifs</a>
+            <Link href="/conseils" className="whitespace-nowrap rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Conseils</Link>
+            <Link href="/espace-pros" className="whitespace-nowrap rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Espace Pros</Link>
+            <Link href="/edition" className="whitespace-nowrap rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Édition</Link>
             <Link href="/inscription" className="whitespace-nowrap rounded-xl bg-amber-500 px-3 py-2 text-slate-950 hover:bg-amber-400">+ Pro</Link>
           </nav>
+
+          <div className="flex items-center gap-2 md:hidden">
+            <Link href="/inscription" className="whitespace-nowrap rounded-xl bg-amber-500 px-3 py-2 text-sm font-bold text-slate-950 hover:bg-amber-400">+ Pro</Link>
+            <button
+              type="button"
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-primary-navigation"
+              onClick={() => setMobileMenuOpen((open) => !open)}
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-bold text-slate-700"
+            >
+              <span aria-hidden="true">{mobileMenuOpen ? "✕" : "☰"}</span>
+              <span>{mobileMenuOpen ? "Fermer" : "Menu"}</span>
+            </button>
+          </div>
         </div>
+        {mobileMenuOpen && (
+          <nav id="mobile-primary-navigation" aria-label="Navigation mobile" className="grid grid-cols-2 gap-2 border-t border-slate-100 px-4 py-3 text-sm font-bold md:hidden">
+            <a href="#tarifs" onClick={() => setMobileMenuOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Tarifs</a>
+            <Link href="/conseils" onClick={() => setMobileMenuOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Conseils</Link>
+            <Link href="/espace-pros" onClick={() => setMobileMenuOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Espace Pros</Link>
+            <Link href="/edition" onClick={() => setMobileMenuOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Édition</Link>
+          </nav>
+        )}
       </header>
 
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 xl:grid-cols-[minmax(0,1fr)_280px]">
@@ -204,8 +228,8 @@ export default function HomePage() {
                       ) : (
                         <button type="button" onClick={() => revealNumber(person.id)} className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700">📱 Numéro</button>
                       )}
-                      <a className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white" href={`https://wa.me/${normalizedPhone}?text=${encodeURIComponent(`Bonjour, je vous contacte via TechniFaso pour votre service ${person.trade}.`)}`} target="_blank" rel="noreferrer">💬 WhatsApp</a>
-                      <a className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700" href={`https://wa.me/?text=${encodeURIComponent(`Découvrez ${person.name}, ${person.trade} sur TechniFaso : ${typeof window !== "undefined" ? window.location.href : "https://technifaso.com"}`)}`} target="_blank" rel="noreferrer" aria-label={`Partager le profil de ${person.name} sur WhatsApp`}>🔗</a>
+                      <a className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white" href={`https://wa.me/${normalizedPhone}?text=${encodeURIComponent(`Bonjour, je vous contacte via TechniFaso pour votre service ${person.trade}.`)}`} target="_blank" rel="noreferrer">🟢 WhatsApp</a>
+                      <a className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700" href={`https://wa.me/?text=${encodeURIComponent(`Découvrez ${person.name}, ${person.trade} à ${person.neighborhood} sur TechniFaso : ${typeof window !== "undefined" ? window.location.href : "https://technifaso.com"}`)}`} target="_blank" rel="noreferrer" aria-label={`Partager le profil de ${person.name} sur WhatsApp`}>↗ Partager</a>
                     </div>
                   </article>
                   {(index + 1) % 3 === 0 && <div className="mt-4"><AdBanner placement={`inline-${index + 1}`} compact /></div>}
