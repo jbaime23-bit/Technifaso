@@ -1,21 +1,7 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl = "https://technifaso.com";
-
 export default function sitemap(): MetadataRoute.Sitemap {
+  const baseUrl = "https://technifaso.com";
   const lastModified = new Date();
-
-  return [
-    "",
-    "/contact",
-    "/inscription",
-    "/mentions-legales",
-    "/politique-de-confidentialite",
-    "/conseils",
-    "/espace-pros",
-    "/edition",
-  ].map((path) => ({
-    url: `${siteUrl}${path}`,
-    lastModified,
-  }));
+  return ["/", "/inscription", "/mentions-legales", "/politique-de-confidentialite", "/conseils", "/sous-traitance", "/membre-pro", "/contact"].map((path) => ({ url: `${baseUrl}${path}`, lastModified, changeFrequency: "monthly", priority: path === "/" ? 1 : 0.7 }));
 }
