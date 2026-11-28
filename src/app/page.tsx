@@ -6,7 +6,6 @@ import AdBanner from "@/components/AdBanner";
 import { normalizeBurkinaPhone } from "@/lib/phone";
 import {
   BOBO_DIOULASSO_NEIGHBORHOODS,
-  NEIGHBORHOODS,
   OTHER_CITIES,
   OUAGADOUGOU_NEIGHBORHOODS,
   TRADE_CATEGORIES,
@@ -37,11 +36,9 @@ export default function HomePage() {
   const [trade, setTrade] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [urgentOnly, setUrgentOnly] = useState(false);
-  const [revealed, setRevealed] = useState<string[]>([]);
   const [copiedPhoneId, setCopiedPhoneId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/technicians")
@@ -56,12 +53,9 @@ export default function HomePage() {
 
   const filtered = useMemo(() => {
     const term = search.trim().toLocaleLowerCase("fr");
-
     return technicians
       .filter((person) => {
-        const haystack =
-          `${person.name} ${person.trade} ${person.city ?? ""} ${person.neighborhood} ${person.description}`.toLocaleLowerCase("fr");
-
+        const haystack = `${person.name} ${person.trade} ${person.city ?? ""} ${person.neighborhood} ${person.description}`.toLocaleLowerCase("fr");
         return (
           (!term || haystack.includes(term)) &&
           (!trade || person.trade === trade) &&
@@ -76,10 +70,6 @@ export default function HomePage() {
           Number(b.emergency) - Number(a.emergency),
       );
   }, [technicians, search, trade, neighborhood, urgentOnly]);
-
-  function revealNumber(id: string) {
-    setRevealed((previous) => (previous.includes(id) ? previous : [...previous, id]));
-  }
 
   async function copyNumber(id: string, phone: string) {
     try {
@@ -100,35 +90,14 @@ export default function HomePage() {
           <Link href="/" className="shrink-0 text-lg font-black tracking-tight text-slate-900">
             Techni<span className="text-amber-600">Faso</span>
           </Link>
-
           <nav aria-label="Navigation principale" className="hidden items-center gap-1 text-sm font-bold md:flex">
             <a href="#tarifs" className="whitespace-nowrap rounded-xl px-3 py-2 text-slate-700">Tarifs</a>
             <Link href="/conseils" className="whitespace-nowrap rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Conseils</Link>
             <Link href="/espace-pros" className="whitespace-nowrap rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Espace Pros</Link>
             <Link href="/inscription" className="whitespace-nowrap rounded-xl bg-amber-500 px-3 py-2 text-slate-950 hover:bg-amber-400">+ Pro</Link>
           </nav>
-
-          <div className="flex items-center gap-2 md:hidden">
-            <Link href="/inscription" className="whitespace-nowrap rounded-xl bg-amber-500 px-3 py-2 text-sm font-bold text-slate-950 hover:bg-amber-400">+ Pro</Link>
-            <button
-              type="button"
-              aria-expanded={mobileMenuOpen}
-              aria-controls="mobile-primary-navigation"
-              onClick={() => setMobileMenuOpen((open) => !open)}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-bold text-slate-700"
-            >
-              <span aria-hidden="true">{mobileMenuOpen ? "✕" : "☰"}</span>
-              <span>{mobileMenuOpen ? "Fermer" : "Menu"}</span>
-            </button>
-          </div>
+          <Link href="/inscription" className="rounded-xl bg-amber-500 px-3 py-2 text-sm font-bold text-slate-950 hover:bg-amber-400 md:hidden">+ Pro</Link>
         </div>
-        {mobileMenuOpen && (
-          <nav id="mobile-primary-navigation" aria-label="Navigation mobile" className="grid grid-cols-2 gap-2 border-t border-slate-100 px-4 py-3 text-sm font-bold md:hidden">
-            <a href="#tarifs" onClick={() => setMobileMenuOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Tarifs</a>
-            <Link href="/conseils" onClick={() => setMobileMenuOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Conseils</Link>
-            <Link href="/espace-pros" onClick={() => setMobileMenuOpen(false)} className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Espace Pros</Link>
-          </nav>
-        )}
       </header>
 
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 xl:grid-cols-[minmax(0,1fr)_280px]">
@@ -136,13 +105,13 @@ export default function HomePage() {
           <div className="mb-5">
             <p className="text-sm font-bold uppercase tracking-widest text-amber-700">Dépannage local, simplement</p>
             <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Trouvez le bon professionnel.</h1>
-            <p className="mt-2 max-w-2xl text-slate-600">Des artisans et techniciens partout au Burkina Faso (Ouagadougou, Bobo-Dioulasso, Koudougou, Kaya, Ouahigouya, Banfora, Fada N&apos;Gourma...).</p>
+            <p className="mt-2 max-w-2xl text-slate-600">Des artisans et techniciens partout au Burkina Faso, notamment à Ouagadougou, Bobo-Dioulasso, Koudougou, Kaya, Ouahigouya, Banfora et Fada N&apos;Gourma.</p>
           </div>
 
           <div className="mb-4 grid gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:grid-cols-2">
             <label className="sm:col-span-2">
               <span className="sr-only">Rechercher un métier ou un service</span>
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Ex. panne courant, fuite d'eau, clim…" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-amber-500" />
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Ex. panne courant, fuite d'eau, clim…" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-amber-500" />
             </label>
             <select aria-label="Filtrer par métier" value={trade} onChange={(event) => setTrade(event.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-3">
               <option value="">Tous les métiers</option>
@@ -166,12 +135,12 @@ export default function HomePage() {
               </optgroup>
               <option value="Autre localité">Autre localité</option>
             </select>
-            <button type="button" onClick={() => setUrgentOnly((current) => !current)} aria-pressed={urgentOnly} className={`rounded-full px-4 py-3 text-left text-sm font-black sm:col-span-2 ${urgentOnly ? "bg-red-600 text-white" : "bg-red-50 text-red-700 hover:bg-red-100"}`}>
+            <button type="button" onClick={() => setUrgentOnly((current) => !current)} aria-pressed={urgentOnly} className={`w-full rounded-full px-4 py-3 text-left text-sm font-black sm:col-span-2 ${urgentOnly ? "bg-red-600 text-white" : "bg-red-50 text-red-700 hover:bg-red-100"}`}>
               ⚡ SOS Urgence 24h/24 {urgentOnly ? "— activé" : ""}
             </button>
           </div>
 
-          <div className="mb-5"><AdBanner placement="filters-top" /></div>
+          <div className="mb-6"><AdBanner placement="filters-top" /></div>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-xl font-black text-slate-900">Professionnels</h2>
             <span className="text-sm text-slate-500">{filtered.length} résultat(s)</span>
@@ -179,7 +148,6 @@ export default function HomePage() {
 
           {loading && <p className="py-10 text-center text-slate-600">Chargement des profils…</p>}
           {error && <p className="rounded-xl bg-red-50 p-4 text-red-700">{error}</p>}
-
           {!loading && !error && filtered.length === 0 && (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
               <p className="font-bold text-slate-800">{urgentOnly ? "Aucun professionnel disponible 24h/24 ne correspond à ces critères." : "Aucun professionnel ne correspond."}</p>
@@ -190,15 +158,16 @@ export default function HomePage() {
           <div className="space-y-4">
             {filtered.map((person, index) => {
               const normalizedPhone = normalizeBurkinaPhone(person.phone);
+              const whatsappHref = `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(`Bonjour, je vous contacte via TechniFaso pour votre service ${person.trade}.`)}`;
               return (
                 <div key={person.id}>
                   <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="flex gap-3">
+                    <div className="flex items-start gap-3">
                       {person.profile_photo ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={person.profile_photo} alt={`Photo de ${person.name}`} className="h-12 w-12 shrink-0 rounded-2xl object-cover" />
+                        <img src={person.profile_photo} alt={`Photo de profil de ${person.name}`} className="h-16 w-16 shrink-0 rounded-2xl border border-slate-200 object-cover" />
                       ) : (
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-lg font-black text-amber-400">{initials(person.name)}</div>
+                        <div aria-label={`Image par défaut pour ${person.name}`} className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-lg font-black text-amber-400">{initials(person.name)}</div>
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
@@ -213,21 +182,17 @@ export default function HomePage() {
                     </div>
 
                     <p className="mt-4 text-sm leading-6 text-slate-600">{person.description}</p>
+                    <p className="mt-4 rounded-xl bg-slate-50 px-3 py-2 text-sm font-bold text-slate-800">
+                      Téléphone : <a className="underline decoration-slate-400 underline-offset-2" href={`tel:+${normalizedPhone}`}>+{normalizedPhone}</a>
+                    </p>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <a href={`tel:+${normalizedPhone}`} className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white">📞 Appeler</a>
-                      {revealed.includes(person.id) ? (
-                        <div className="flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 font-bold text-slate-900">
-                          <span>+{normalizedPhone}</span>
-                          <button type="button" className="text-xs text-amber-800 underline" onClick={() => void copyNumber(person.id, person.phone)}>
-                            {copiedPhoneId === person.id ? "Numéro copié !" : "Copier"}
-                          </button>
-                        </div>
-                      ) : (
-                        <button type="button" onClick={() => revealNumber(person.id)} className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700">📱 Numéro</button>
-                      )}
-                      <a className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white" href={`https://wa.me/${normalizedPhone}?text=${encodeURIComponent(`Bonjour, je vous contacte via TechniFaso pour votre service ${person.trade}.`)}`} target="_blank" rel="noreferrer">🟢 WhatsApp</a>
-                      <a className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700" href={`https://wa.me/?text=${encodeURIComponent(`Découvrez ${person.name}, ${person.trade} à ${person.neighborhood} sur TechniFaso : ${typeof window !== "undefined" ? window.location.href : "https://technifaso.com"}`)}`} target="_blank" rel="noreferrer" aria-label={`Partager le profil de ${person.name} sur WhatsApp`}>↗ Partager</a>
+                    <div className="mt-3 flex w-full flex-col gap-3">
+                      <a href={`tel:+${normalizedPhone}`} className="block w-full rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-bold text-white">📞 Appeler</a>
+                      <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="block w-full rounded-xl bg-emerald-600 px-4 py-3 text-center text-sm font-bold text-white">Contacter sur WhatsApp</a>
+                      <button type="button" onClick={() => void copyNumber(person.id, person.phone)} className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50">
+                        {copiedPhoneId === person.id ? "Numéro copié !" : "Copier le numéro"}
+                      </button>
+                      <a href={`https://wa.me/?text=${encodeURIComponent(`Découvrez ${person.name}, ${person.trade} à ${person.neighborhood} sur TechniFaso.`)}`} target="_blank" rel="noopener noreferrer" className="block w-full rounded-xl border border-slate-200 px-4 py-3 text-center text-sm font-bold text-slate-700">Partager le profil</a>
                     </div>
                   </article>
                   {(index + 1) % 3 === 0 && <div className="mt-4"><AdBanner placement={`inline-${index + 1}`} compact /></div>}
