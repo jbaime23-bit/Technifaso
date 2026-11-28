@@ -36,6 +36,7 @@ export default function HomePage() {
   const [trade, setTrade] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [urgentOnly, setUrgentOnly] = useState(false);
+  const [revealed, setRevealed] = useState<string[]>([]);
   const [copiedPhoneId, setCopiedPhoneId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -71,12 +72,16 @@ export default function HomePage() {
       );
   }, [technicians, search, trade, neighborhood, urgentOnly]);
 
+  function revealNumber(id: string) {
+    setRevealed((previous) => previous.includes(id) ? previous : [...previous, id]);
+  }
+
   async function copyNumber(id: string, phone: string) {
     try {
       await navigator.clipboard.writeText(`+${normalizeBurkinaPhone(phone)}`);
       setCopiedPhoneId(id);
       window.setTimeout(() => {
-        setCopiedPhoneId((current) => (current === id ? null : current));
+        setCopiedPhoneId((current) => current === id ? null : current);
       }, 2000);
     } catch {
       setCopiedPhoneId(null);
@@ -159,15 +164,16 @@ export default function HomePage() {
             {filtered.map((person, index) => {
               const normalizedPhone = normalizeBurkinaPhone(person.phone);
               const whatsappHref = `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(`Bonjour, je vous contacte via TechniFaso pour votre service ${person.trade}.`)}`;
+              const shareHref = `https://wa.me/?text=${encodeURIComponent(`Découvrez ${person.name}, ${person.trade} sur TechniFaso : ${typeof window !== "undefined" ? window.location.href : "https://technifaso.com"}`)}`;
               return (
                 <div key={person.id}>
                   <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="flex items-start gap-3">
+                    <div className="flex gap-3">
                       {person.profile_photo ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={person.profile_photo} alt={`Photo de profil de ${person.name}`} className="h-16 w-16 shrink-0 rounded-2xl border border-slate-200 object-cover" />
+                        <img src={person.profile_photo} alt={`Photo de ${person.name}`} className="h-12 w-12 shrink-0 rounded-2xl object-cover" />
                       ) : (
-                        <div aria-label={`Image par défaut pour ${person.name}`} className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-lg font-black text-amber-400">{initials(person.name)}</div>
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-lg font-black text-amber-400">{initials(person.name)}</div>
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
@@ -182,17 +188,20 @@ export default function HomePage() {
                     </div>
 
                     <p className="mt-4 text-sm leading-6 text-slate-600">{person.description}</p>
-                    <p className="mt-4 rounded-xl bg-slate-50 px-3 py-2 text-sm font-bold text-slate-800">
-                      Téléphone : <a className="underline decoration-slate-400 underline-offset-2" href={`tel:+${normalizedPhone}`}>+{normalizedPhone}</a>
-                    </p>
-
-                    <div className="mt-3 flex w-full flex-col gap-3">
+                    <div className="mt-4 flex w-full flex-col gap-3">
                       <a href={`tel:+${normalizedPhone}`} className="block w-full rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-bold text-white">📞 Appeler</a>
-                      <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="block w-full rounded-xl bg-emerald-600 px-4 py-3 text-center text-sm font-bold text-white">Contacter sur WhatsApp</a>
-                      <button type="button" onClick={() => void copyNumber(person.id, person.phone)} className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50">
-                        {copiedPhoneId === person.id ? "Numéro copié !" : "Copier le numéro"}
-                      </button>
-                      <a href={`https://wa.me/?text=${encodeURIComponent(`Découvrez ${person.name}, ${person.trade} à ${person.neighborhood} sur TechniFaso.`)}`} target="_blank" rel="noopener noreferrer" className="block w-full rounded-xl border border-slate-200 px-4 py-3 text-center text-sm font-bold text-slate-700">Partager le profil</a>
+                      {revealed.includes(person.id) ? (
+                        <div className="flex w-full flex-col gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                          <span className="text-center font-bold text-slate-900">+{normalizedPhone}</span>
+                          <button type="button" className="w-full rounded-lg px-3 py-2 text-sm font-bold text-amber-800 underline" onClick={() => void copyNumber(person.id, person.phone)}>
+                            {copiedPhoneId === person.id ? "Numéro copié !" : "Copier"}
+                          </button>
+                        </div>
+                      ) : (
+                        <button type="button" onClick={() => revealNumber(person.id)} className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700">📱 Numéro</button>
+                      )}
+                      <a className="block w-full rounded-xl bg-emerald-600 px-4 py-3 text-center text-sm font-bold text-white" href={whatsappHref} target="_blank" rel="noreferrer">💬 WhatsApp</a>
+                      <a className="block w-full rounded-xl border border-slate-200 px-4 py-3 text-center text-sm font-bold text-slate-700" href={shareHref} target="_blank" rel="noreferrer" aria-label={`Partager le profil de ${person.name} sur WhatsApp`}>🔗 Partager</a>
                     </div>
                   </article>
                   {(index + 1) % 3 === 0 && <div className="mt-4"><AdBanner placement={`inline-${index + 1}`} compact /></div>}
