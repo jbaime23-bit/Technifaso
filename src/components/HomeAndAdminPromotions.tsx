@@ -13,6 +13,8 @@ const services = [
   ["Conseils pratiques par métier", "/conseils"],
   ["Devenir Membre Pro", "/membre-pro"],
 ] as const;
+const advertisingWhatsApp = "https://wa.me/22678100310";
+const advertisingPhone = "tel:+22678100310";
 
 function isHttpUrl(value: string) {
   try {
@@ -46,12 +48,20 @@ export function BanniereQuincaillerie() {
     return () => window.clearInterval(timer);
   }, [enabled, slides.length]);
 
+  const contactLinks = (
+    <div className="mt-3 flex w-full flex-col gap-2">
+      <a href={advertisingWhatsApp} target="_blank" rel="noopener noreferrer" className="block w-full rounded-xl bg-emerald-700 px-4 py-3 text-center text-sm font-bold text-white">Publicité &amp; partenariat WhatsApp : +226 78 10 03 10</a>
+      <a href={advertisingPhone} className="block w-full rounded-xl border border-slate-300 px-4 py-3 text-center text-sm font-bold text-slate-800">Appeler : +226 78 10 03 10</a>
+    </div>
+  );
+
   if (!enabled) {
     return (
       <section className="w-full rounded-2xl border border-amber-300 bg-amber-50 p-5 text-center shadow-sm" aria-label="Publicité quincaillerie">
         <p className="text-xs font-black uppercase tracking-widest text-amber-800">Espace publicitaire partenaire</p>
         <h2 className="mt-2 text-lg font-black text-slate-950">Quincailleries &amp; Fournisseurs (Électricité, Solaire, BTP) : Diffusez votre photo ou vidéo publicitaire ici !</h2>
         <Link href="/contact" className="mt-4 block w-full rounded-xl bg-amber-500 px-4 py-3 text-center font-black text-slate-950">Réserver cet espace pub</Link>
+        {contactLinks}
       </section>
     );
   }
@@ -80,6 +90,7 @@ export function BanniereQuincaillerie() {
           <button type="button" onClick={() => setSlide((slide - 1 + slides.length) % slides.length)} className="w-full rounded-xl border border-slate-300 px-4 py-2 font-bold">Précédent</button>
         </div>
       )}
+      {contactLinks}
     </section>
   );
 }
@@ -164,22 +175,18 @@ function HomePromotionsPortal() {
     const updateMobileNav = () => {
       const nav = document.querySelector<HTMLElement>('#mobile-primary-navigation[aria-label="Navigation mobile"]');
       if (!nav) return;
-      nav.classList.remove("grid-cols-2");
-      nav.classList.add("grid-cols-1");
+      nav.classList.remove("grid-cols-2", "grid");
       nav.classList.add("flex", "flex-col");
-      nav.classList.remove("grid");
       setMobileNavTarget(nav);
 
       const menuButton = document.querySelector<HTMLButtonElement>('button[aria-controls="mobile-primary-navigation"]');
-      const mobileActions = menuButton?.parentElement;
-      const signupLink = mobileActions?.querySelector<HTMLAnchorElement>('a[href="/inscription"]');
+      const signupLink = menuButton?.parentElement?.querySelector<HTMLAnchorElement>('a[href="/inscription"]');
       if (signupLink) signupLink.style.display = "none";
     };
 
     updateMobileNav();
     const observer = new MutationObserver(updateMobileNav);
     observer.observe(document.body, { childList: true, subtree: true });
-
     return () => {
       observer.disconnect();
       contentMount.remove();
@@ -189,25 +196,27 @@ function HomePromotionsPortal() {
   }, []);
 
   if (!contentTarget && !mobileNavTarget) return null;
-  return <>
-    {contentTarget && createPortal(
-      <>
-        <nav aria-label="Services TechniFaso" className="flex w-full flex-col gap-3">
-          {services.map(([label, href]) => <Link key={href} href={href} className="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-center font-bold text-slate-900 shadow-sm hover:border-amber-400">{label}</Link>)}
-        </nav>
-        <BanniereQuincaillerie />
-      </>,
-      contentTarget,
-    )}
-    {mobileNavTarget && createPortal(
-      <>
-        <Link href="/sous-traitance" className="block w-full rounded-xl px-3 py-3 text-slate-700 hover:bg-slate-100">Sous-traitance</Link>
-        <Link href="/membre-pro" className="block w-full rounded-xl px-3 py-3 text-slate-700 hover:bg-slate-100">Devenir Membre Pro</Link>
-        <Link href="/inscription" className="block w-full rounded-xl bg-amber-500 px-3 py-3 text-center text-slate-950">+ Pro / Inscription</Link>
-      </>,
-      mobileNavTarget,
-    )}
-  </>;
+  return (
+    <>
+      {contentTarget && createPortal(
+        <>
+          <nav aria-label="Services TechniFaso" className="flex w-full flex-col gap-3">
+            {services.map(([label, href]) => <Link key={href} href={href} className="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-center font-bold text-slate-900 shadow-sm hover:border-amber-400">{label}</Link>)}
+          </nav>
+          <BanniereQuincaillerie />
+        </>,
+        contentTarget,
+      )}
+      {mobileNavTarget && createPortal(
+        <>
+          <Link href="/sous-traitance" className="block w-full rounded-xl px-3 py-3 text-slate-700 hover:bg-slate-100">Sous-traitance</Link>
+          <Link href="/membre-pro" className="block w-full rounded-xl px-3 py-3 text-slate-700 hover:bg-slate-100">Devenir Membre Pro</Link>
+          <Link href="/inscription" className="block w-full rounded-xl bg-amber-500 px-3 py-3 text-center text-slate-950">+ Pro / Inscription</Link>
+        </>,
+        mobileNavTarget,
+      )}
+    </>
+  );
 }
 
 export default function HomeAndAdminPromotions() {
